@@ -22,7 +22,7 @@
     <div id="veu-app" class="container">
         <h1>Orders</h1>
         <div class="row">
-            <div class="col-6">
+            <div class="col-4">
                 <div class="card">
                     <div class="card-header">
                         <h3>Create an Order</h3>
@@ -87,7 +87,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-8">
                 <div class="card">
                     <div class="card-header">
                         <h3>Order List</h3>
@@ -105,8 +105,41 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="order in orders">
-                                    <td>[[ order.id ]]</td>
+                                <tr v-for="(order, index) in orders">
+                                    <td>[[ index + 1  ]]</td>
+                                    <td>[[ order.customer_name ]]</td>
+                                    <td><a href="" data-bs-toggle="modal" :data-bs-target="getModalID('#view', order.order_no)">[[ index ]]</a></td>
+                                    <!-- Modal -->
+                                    <div class="modal fade" :id="getModalID('view', index)" tabindex="-1" :aria-labelledby="getModalID('label', index)" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" :id="getModalID('label', index)">Update Customer </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    
+                                                      
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <td>[[ order.discount ]]</td>
+                                    <td>[[ order.gross ]]</td>
+                                    <td>
+                                        <a class="btn btn-primary" v-on:click="">Edit</a>
+                                        <a class="btn btn-danger" v-on:click="deleteOrder(order.order_no)">Delete</a>
+                                    </td>
+
+
+
+
+
+
+                                      
+
+
                                 </tr>
                             </tbody>
                         </table>
@@ -126,6 +159,7 @@
         const URL_LIST_PRODUCTS = "{% url 'products:list_product' %}";
         const URL_CREATE_ORDER = "{% url 'add_order' %}";
         const URL_LIST_ORDER = "{% url 'list_order' %}";
+        const URL_DELETE_ORDER = "{% url 'delete_order' %}";
         var app = new Vue({
             el: "#veu-app",
             delimiters: ['[[', ']]'],
@@ -207,9 +241,10 @@
                     }
                 },
                 listOrder(){
-                    axios.get(URL_LIST_ORDER)
+                    axios.post(URL_LIST_ORDER)
                     .then(response => {
                         this.orders = response.data;
+                        console.log("Order List :");
                         console.log(this.orders);
                     })
                 },
@@ -217,9 +252,21 @@
                     console.log(this.orderData);
                     axios.post(URL_CREATE_ORDER, this.orderData)
                     .then(response => {
+                     this.listOrder();
                         console.log(response.data);
                     })
-                }
+                },
+                deleteOrder(order_id){
+                    console.log("Delete Order : " + order_id);
+                    axios.post(URL_DELETE_ORDER, {order_id: order_id})
+                    .then(response => {
+                        this.listOrder();
+                        console.log(response.data);
+                    })
+                },
+                getModalID(modal, id){
+                    return modal + id;
+                },
             },
             mounted(){
                 this.getCustomerList();

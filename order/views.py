@@ -55,10 +55,11 @@ def add_order(request):
     else:
         return HttpResponse('Invalid request')
 
+@csrf_exempt
 def list_order(request):
-    if request.method == "GET":
+    if request.method == "POST":
         orders = Order.objects.all()
-        return JsonResponse({'orders': list(orders.values())})
+        return JsonResponse(list(orders.values()), safe=False)
     else:
         return HttpResponse('Invalid request')
 
@@ -119,8 +120,11 @@ def delete_orderline(request, id):
         return HttpResponse('Invalid request')
 
 @csrf_exempt
-def delete_order(request, id):
-    if request.method == "DELETE":
+def delete_order(request):
+    if request.method == "POST":
+        data = request.body
+        data = json.loads(data)
+        id = data['order_id']
         Order.objects.filter(order_no=id).delete()
         return HttpResponse('Order deleted successfully')
     else:
