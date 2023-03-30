@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+        crossorigin="anonymous"></script>
+    <title>Order</title>
+</head>
+
+<body>
+    <div id="veu-app" class="container">
+        <h1>Orders</h1>
+        <div class="row">
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Create an Order</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                            <a class="btn btn btn-outline-secondary"  style="width: 100%;" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+                                                Select Product
+                                            </a>
+                                            
+                                          
+                                          <div class="collapse" id="collapseExample">
+                                            <div class="card card-body">
+                                                <!-- Product List -->
+                                                <div class="row" v-for="product in products" >
+                                                    <div class="col-9" style="text-align: center;  background-color: rgb(243, 243, 243); border-radius: 4; ">
+                                                        [[ product.name ]]
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="btn-group" role="group" aria-label="Basic outlined example">
+                                                            <button type="button" class="btn btn-outline-primary" v-on:click="incrementQty(product.product_code)">+</button>
+                                                            <button type="button" class="btn btn-outline-primary" disabled><b>[[ getProductQty(product.product_code) ]]</b></button>
+                                                            <button type="button" class="btn btn-outline-primary" v-on:click="decreaseQty(product.product_code)">-</button>
+                                                          </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Product List -->
+                                            </div>
+                                          </div>
+
+
+                                        <div class="mb-3">
+                                            <label for="product" class="form-label">Customer</label>
+                                            <select class="form-select" aria-label="Default select example" v-model="orderData.customer_code">
+                                                <option selected disabled>Select a Customer...</option>
+                                                <option v-for="customer in customers" :value="customer.customer_code">[[ customer.name ]]</option>
+                                              </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="total" class="form-label">Discount (%)</label>
+                                            <input type="number" class="form-control" id="total" v-model="orderData.discount">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="discount" class="form-label">Total</label>
+                                            <input type="number" class="form-control" id="discount" v-model="orderData.total" disabled >
+                                        </div>
+
+
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <button class="btn btn-primary" v-on:click="createOrder">Create Order</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Order List</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col"><b>#</b></th>
+                                    <th scope="col">Customer</th>
+                                    <th scope="col">Order No.</th>
+                                    <th scope="col">Discount</th>
+                                    <th scope="col">Total</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="order in orders">
+                                    <td>[[ order.id ]]</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // var e = document.getElementById("ddlViewBy");
+        // var value = e.value;
+        var orderData = { products: [],  customer_code : '', discount: 0, total: 0 }; // {product_code : '' , quantity : 0}
+        
+        var customerData = { name: '', customer_code: ''};
+        const URL_LIST_CUSTOMER = "{% url 'customer:view_customer' %}";
+        const URL_LIST_PRODUCTS = "{% url 'products:list_product' %}";
+        const URL_CREATE_ORDER = "{% url 'add_order' %}";
+        const URL_LIST_ORDER = "{% url 'list_order' %}";
+        var app = new Vue({
+            el: "#veu-app",
+            delimiters: ['[[', ']]'],
+            data: {
+                orderData: orderData,
+                customers: [],
+                orderList: [],
+                orders: [],
+                products: [],
+            },
+            methods: {
+                getCustomerList(){
+                    axios.get(URL_LIST_CUSTOMER)
+                    .then(response => {
+                        this.customers = response.data;
+                        console.log(this.customers);
+                    })
+                    
+                },
+                getCustomer (customer_code){
+                    console.log("Customer Code : " + customer_code);
+                    this.orderData.customer_code = customer_code;
+                },
+                    
+                getProductList(){
+                    axios.post(URL_LIST_PRODUCTS)
+                    .then(response => {
+                        this.products = response.data;
+                        console.log(this.products);
+                    })
+                    
+                },
+                incrementQty(product_code){
+                    console.log("Len :");
+                    console.log(this.orderData.products.length);
+                    for (var i = 0; i < this.orderData.products.length; i++) {
+                        if(this.orderData.products[i].product_code == product_code){
+                            this.orderData.products[i].quantity += 1;
+                            console.log("IncQTY :");
+                            console.log(this.orderData.products);
+                            return;
+                        }
+                    }
+                    this.orderData.products.push({product_code: product_code, quantity: 1});
+                        console.log("Init PUSH :");
+                        console.log(this.orderData.products);
+                        return;
+                               
+                },
+                decreaseQty(product_code){
+                    for (var i = 0; i < this.orderData.products.length; i++) {
+                        if(this.orderData.products[i].product_code == product_code){
+                            if (this.orderData.products[i].quantity > 1 ){
+                                this.orderData.products[i].quantity -= 1;
+                                console.log("DecQTY :");
+                                console.log(this.orderData.products);
+                                return;
+                            } else {
+                                this.orderData.products.splice(i, 1);
+                                console.log("DecQTY Below 0:");
+                                console.log(this.orderData.products);
+                                return;
+                            }
+                        }
+                    }
+                },
+                
+               
+                getProductQty(product_code){
+                    if (this.orderData.products.length == 0){
+                        return 0;
+                    }
+                    for (var i = 0; i < this.orderData.products.length; i++){
+                        console.log(this.orderData.products[i].quantity);
+                       
+                        if (this.orderData.products[i].product_code == product_code){
+                            return this.orderData.products[i].quantity;
+                        }
+                    }
+                },
+                listOrder(){
+                    axios.get(URL_LIST_ORDER)
+                    .then(response => {
+                        this.orders = response.data;
+                        console.log(this.orders);
+                    })
+                },
+                createOrder(){
+                    console.log(this.orderData);
+                    axios.post(URL_CREATE_ORDER, this.orderData)
+                    .then(response => {
+                        console.log(response.data);
+                    })
+                }
+            },
+            mounted(){
+                this.getCustomerList();
+                this.getProductList();
+                this.listOrder();
+                
+            }
+
+
+        })
+    </script>
+
+
+
+</body>
+
+</html>
