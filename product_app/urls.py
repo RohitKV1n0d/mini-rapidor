@@ -19,7 +19,7 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^customer/', include('customer.urls' , namespace='customer')),
     url(r'^products/', include('products.urls', namespace='products')),
-    url(r'^order/', include('order.urls')),
+    url(r'^order/', include('order.urls', namespace='order')),
 
     
 ]

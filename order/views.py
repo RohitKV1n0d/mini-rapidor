@@ -6,6 +6,7 @@ from customer.models import customer as Customer
 from products.models import product as Product
 from django.views.decorators.csrf import csrf_exempt
 import json
+import math
 
 
 
@@ -46,19 +47,21 @@ def add_order(request):
             price = product.price
             quantity = P['quantity']
             tax = product.tax
-            orderline = OrderLines.objects.create(order_no=order, product_code=product, product_name=product_name, price=price, quantity=quantity, tax=tax)
+            orderline = OrderLines.objects.create(order_no=order, product_code=P['product_code'], product_name=product_name, price=price, quantity=quantity, tax=tax)
             total_without_discount = float(total_without_discount) + (float(orderline.price) * float(orderline.quantity))
             gross = gross + (float(orderline.price) * float(orderline.quantity)) + (float(orderline.price) * float(orderline.quantity) * float(orderline.tax) / 100)
         gross = gross - (gross * float(discount) / 100)
+        gross = math.ceil(gross)
         Order.objects.filter(order_no=order.order_no).update(total_without_discount=total_without_discount, gross=gross)
         return HttpResponse('Order added successfully')
     else:
         return HttpResponse('Invalid request')
 
+@csrf_exempt
 def list_order(request):
-    if request.method == "GET":
+    if request.method == "POST":
         orders = Order.objects.all()
-        return JsonResponse({'orders': list(orders.values())})
+        return JsonResponse(list(orders.values()), safe=False)
     else:
         return HttpResponse('Invalid request')
 
@@ -75,6 +78,17 @@ def edit_order_discount(request):
         return HttpResponse('Order discount updated successfully')
     else:
         return HttpResponse('Invalid request')
+
+@csrf_exempt
+def listOrderLine(request):
+    if request.method == "POST":
+        data = request.body
+        data = json.loads(data)
+        order_no = data['order_no']
+        orderlines = OrderLines.objects.filter(order_no=order_no)
+        return JsonResponse(list(orderlines.values()), safe=False)
+    else:
+        return HttpResponse('Invalid request')  
 
 @csrf_exempt
 def edit_orderline(request, id):
@@ -119,11 +133,13 @@ def delete_orderline(request, id):
         return HttpResponse('Invalid request')
 
 @csrf_exempt
-def delete_order(request, id):
-    if request.method == "DELETE":
+def delete_order(request):
+    if request.method == "POST":
+        data = request.body
+        data = json.loads(data)
+        id = data['order_id']
         Order.objects.filter(order_no=id).delete()
         return HttpResponse('Order deleted successfully')
     else:
         return HttpResponse('Invalid request')
 
-        

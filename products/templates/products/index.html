@@ -19,6 +19,17 @@
 </head>
 
 <body>
+    <ul class="nav nav-tabs justify-content-end">
+        <li class="nav-item">
+          <a class="nav-link"  href="{% url 'customer:index' %}">Customers</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'products:index' %}">Products</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="{% url 'order:index' %}">Orders</a>
+        </li>
+      </ul>
 
     <div id="vue-app" class="container">
         <h1>Products</h1>
