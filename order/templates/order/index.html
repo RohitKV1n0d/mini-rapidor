@@ -196,7 +196,7 @@
                                     <td>[[ order.discount ]] %</td>
                                     <td>INR [[ order.gross ]]</td>
                                     <td>
-                                        <a class="btn btn-primary" v-on:click=""><i class="fas fa-pen"></i></a>
+                                        <a class="btn btn-primary"  @click="isEditing = !isEditing" ><i class="fas fa-pen"> [[ isEditing ? '' : 'Edit' ]]</i></a>
                                         <a class="btn btn-danger" v-on:click="deleteOrder(order.order_no)"><i class="far fa-trash-can"></i></a>
                                     </td>
 
@@ -238,6 +238,7 @@
                 orderList: [],
                 orders: [],
                 products: [],
+                isEditing: false,
             },
             methods: {
                 getCustomerList(){
